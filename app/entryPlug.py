@@ -1,14 +1,12 @@
+import yaml
 # The EntryPlug is a global class that contains configuration information
 
 class EntryPlug:
     def __init__(self, configfile):
-        self.checkers = self.load_checkers(configfile)
+        self.config = self.load(configfile)
+        self.checkers = self.config['checks']
 
-    def load_checkers(self, configfile):
+    def load(self, configfile):
         with open(configfile, 'r') as f:
-            checkers = f.readlines()
-        return [x.strip() for x in checkers]
-
-    def load_instrumentation(self):
-        # TODO
-        pass
+            y = yaml.load(f)
+        return y
