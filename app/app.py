@@ -16,10 +16,10 @@ def hello_world():
 
 @app.route('/check', methods=['GET'])
 def health_check():
-    print request
     health_map = {}
+    host = app.config.get('APP_HOST')
     for check in plug.checkers:
-        health_map[check] = call_plugin(check, "checks")
+        health_map[check] = call_plugin(check, "checks", host)
 
     unhealthy = find_unhealthy(health_map)
     if unhealthy:
@@ -48,4 +48,4 @@ def find_unhealthy(checks):
 if __name__ == '__main__':
     app.run(debug=True,host='0.0.0.0')
     app.config.from_envvar('APP_HOST')
-    print app.config.get('APP_HOST')
+    print(app.config.get('APP_HOST'))
