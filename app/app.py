@@ -1,7 +1,8 @@
 import sys, os
 from entryPlug import EntryPlug
-from flask import Flask
+from flask import Flask, request
 import importlib
+import json
 
 app = Flask(__name__)
 plug = EntryPlug(sys.argv[1])
@@ -13,15 +14,16 @@ plug = EntryPlug(sys.argv[1])
 def hello_world():
     return 'Evangalion Appliction, Dockerized'
 
-@app.route('/check')
+@app.route('/check', methods=['GET'])
 def health_check():
+    print request
     health_map = {}
     for check in plug.checkers:
         health_map[check] = call_plugin(check, "checks")
 
     unhealthy = find_unhealthy(health_map)
     if unhealthy:
-        return "Something was unhealthy", 500
+        return json.dumps(unhealthy), 500
     else:
         return "Everything healthy!", 200
 
@@ -43,10 +45,7 @@ def find_unhealthy(checks):
     return {k:v for k,v in checks.iteritems() if v[0] == False }
 
 
-def formulate_health_response(unhealthy):
-    pass
-
-
 if __name__ == '__main__':
     app.run(debug=True,host='0.0.0.0')
-    # TODO: load in a bunch of configuration stuff from service we are attached to
+    app.config.from_envvar('APP_HOST')
+    print app.config.get('APP_HOST')
