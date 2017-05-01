@@ -3,10 +3,13 @@ from entryPlug import EntryPlug
 from flask import Flask, request
 import importlib
 import json
+import statsd
+
+## Initialize ##
 
 app = Flask(__name__)
 plug = EntryPlug(sys.argv[1])
-
+stats_client = statsd.StatsClient("localhost", 8125, prefix=plug.environment.get['APP'])
 
 ## Routes ##
 
@@ -21,6 +24,7 @@ def health_check():
     for check in plug.checkers:
         health_map[check] = call_plugin(check, "checks", **plug.environment)
 
+    stats_client.incr(health_check.__name__)
     unhealthy = find_unhealthy(health_map)
     if unhealthy:
         return json.dumps(unhealthy), 500
@@ -33,10 +37,6 @@ def call_plugin(name, module, **kwargs):
     plugin_name = '.'.join((module, name))
     plugin = importlib.import_module(plugin_name)
     return plugin.main(**kwargs)
-    # try:
-    #     return plugin.main(*args, **kwargs)
-    # except StandardError:
-    #     print("Error executing module {0}".format(plugin_name))
 
 
 ## Health check methods ##

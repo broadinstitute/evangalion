@@ -1,6 +1,6 @@
 import requests
 
-# Given a host, returns a 
+# Given a host, returns a
 def simple_health_check(host):
     if not host:
         raise StandardError("Error! APP_HOST not set.")
