@@ -17,9 +17,9 @@ def hello_world():
 @app.route('/check', methods=['GET'])
 def health_check():
     health_map = {}
-    host = app.config.get('APP_HOST')
+
     for check in plug.checkers:
-        health_map[check] = call_plugin(check, "checks", host)
+        health_map[check] = call_plugin(check, "checks", **plug.environment)
 
     unhealthy = find_unhealthy(health_map)
     if unhealthy:
@@ -29,12 +29,14 @@ def health_check():
 
 ## Plugin methods ##
 
-def call_plugin(name, module, *args, **kwargs):
-    plugin = importlib.import_module('.'.join((module, name)))
-    try:
-        return plugin.main(*args, **kwargs)
-    except StandardError:
-        print("module not found!")
+def call_plugin(name, module, **kwargs):
+    plugin_name = '.'.join((module, name))
+    plugin = importlib.import_module(plugin_name)
+    return plugin.main(**kwargs)
+    # try:
+    #     return plugin.main(*args, **kwargs)
+    # except StandardError:
+    #     print("Error executing module {0}".format(plugin_name))
 
 
 ## Health check methods ##
@@ -47,5 +49,3 @@ def find_unhealthy(checks):
 
 if __name__ == '__main__':
     app.run(debug=True,host='0.0.0.0')
-    app.config.from_envvar('APP_HOST')
-    print(app.config.get('APP_HOST'))
