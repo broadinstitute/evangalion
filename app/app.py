@@ -9,7 +9,8 @@ import statsd
 
 app = Flask(__name__)
 plug = EntryPlug(sys.argv[1])
-stats_client = statsd.StatsClient("localhost", 8125, prefix=plug.environment.get['APP'])
+app_name = plug.environment.get('APP')
+stats_client = statsd.StatsClient("statsd", 8125, prefix=app_name)
 
 ## Routes ##
 
@@ -24,11 +25,12 @@ def health_check():
     for check in plug.checkers:
         health_map[check] = call_plugin(check, "checks", **plug.environment)
 
-    stats_client.incr(health_check.__name__)
     unhealthy = find_unhealthy(health_map)
     if unhealthy:
+        stats_client.incr('health_check.500')
         return json.dumps(unhealthy), 500
     else:
+        stats_client.incr('health_check.200')
         return "Everything healthy!", 200
 
 ## Plugin methods ##

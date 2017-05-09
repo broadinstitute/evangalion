@@ -22,3 +22,43 @@ Load any additional check modules into `/app/checks`.  Should be written in pyth
 These plugins should all have a `main` method that 
 * takes `(*args, **kwargs)` as parameters
 * returns a tuple of `(healthy? {bool}, message {str})`
+
+## Notes
+
+Mock compose with eva and statsd, using local ui:
+```yaml
+ui:
+  image: broadinstitute/firecloud-ui:dev
+  ports:
+    - "80:80"
+    - "443:443"
+    - "8000:8000"
+  volumes:
+    - ./ca-bundle.crt:/etc/ssl/certs/ca-bundle.crt
+    - ./server.crt:/etc/ssl/certs/server.crt
+    - ./server.key:/etc/ssl/private/server.key
+    - .:/config:rw
+  environment:
+    SERVER_NAME: local.broadinstitute.org
+    HTTPS_ONLY: "false"
+
+statsd:
+    image: visity/statsd
+    ports:
+      - "8125:8125/udp"
+    volumes:
+      - ./statsdConfig.js:/opt/statsd/config.js
+
+evangalion:
+  image: evangalion
+  ports:
+    - "5000:5000"
+  links:
+    - ui:ui
+    - statsd:statsd
+  volumes:
+    - ./config.yml:/app/config.yml:ro
+  command: app.py ./config.yml
+  environment:
+    - PYTHONUNBUFFERED=0
+```
